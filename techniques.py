@@ -55,6 +55,10 @@ def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_s
     content_col: column name containing text data (content for Albaian data)
     label_col: column name containing labels (fake_news for Albanian data)
     test_size: proportion of data to use for testing
+
+    Returns:
+    accuracy: accuracy of classifier
+    top_words: top words influencing fake news (top 10, can change in function header at top_n)
     """
 
     # tokenize data
@@ -74,6 +78,7 @@ def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_s
     vocab = set(fake_word_counts.keys()).union(set(real_word_counts.keys()))
     vocab_size = len(vocab)
 
+    #laplace smoothing for word likelihoods
     word_likelihoods = {
         word: {
             'fake': (fake_word_counts[word] + 1) / (total_fake_words + vocab_size),
@@ -93,7 +98,7 @@ def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_s
                 log_prob_fake += np.log(likelihoods[token]['fake'])
                 log_prob_real += np.log(likelihoods[token]['real'])
 
-        return 1 if log_prob_fake > log_prob_real else 0
+        return 1 if log_prob_fake > log_prob_real else 0 # 1 is fake, 0 is real
 
     # run classifier
     train, test = train_test_split(data, test_size=test_size, random_state=random_state)
@@ -106,7 +111,7 @@ def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_s
     )
 
     accuracy = accuracy_score(test[label_col], test['predicted'])
-    print(f"Accuracy: {accuracy:.2f}")
+    print(f"Accuracy: {accuracy}")
 
     # print top words influencing fake news
     word_influence = {
@@ -123,8 +128,8 @@ def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_s
 
     return accuracy, top_words
 
-#albanian data
-X = albanian['content']
-y = albanian['fake_news']
+#run classifier
 naive_bayes_classifier(albanian, 'content', 'fake_news')
 naive_bayes_classifier(soccer, 'tweet', 'real')
+
+
