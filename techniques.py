@@ -45,7 +45,10 @@ import re
 from collections import Counter
 
 
-#tokenize data
+
+def tokenize(text):
+    return re.findall(r'\b\w+\b|[!?.,;]', text.lower())  # Tokenize words and punctuation
+
 def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_state=42, top_n=10):
     """
     Reusable function for Naive Bayes classification
@@ -61,9 +64,6 @@ def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_s
     top_words: top words influencing fake news (top 10, can change in function header at top_n)
     """
 
-    # tokenize data
-    def tokenize(text):
-        return re.findall(r'\b\w+\b|[!?.,;]', text.lower())  # Tokenize words and punctuation
 
     data['tokens'] = data[content_col].apply(tokenize)
 
@@ -128,8 +128,68 @@ def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_s
 
     return accuracy, top_words
 
-#run classifier
+
+
+#start knn
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import classification_report
+
+def knn_classifier(data, content_col, label_col, test_size=0.2, random_state=42, n_neighbors=10, top_n=10):
+    """
+    Reusable function for KNN classification
+    
+    Args:
+    data: pandas DataFrame
+    content_col: column name containing text data
+    label_col: column name containing labels
+    test_size: proportion of data to use for testing
+    n_neighbors: number of neighbors to consider
+
+    Returns:
+    accuracy: accuracy of classifier
+    top_features: top features influencing classification
+
+   We are going to use the TF-IDF vectorizer, which was not used in Naive Bayes
+    because Naive Bayes relies on absolute word counts rather than the relative importance of words across documents.
+    """
+    data['tokens'] = data[content_col].apply(tokenize)
+    data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
+    X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
+
+    # vectorize text data using TF-IDF useful for KNN 
+    vectorizer = TfidfVectorizer()
+    X_train = vectorizer.fit_transform(X_train)
+    X_test = vectorizer.transform(X_test)
+    knn = KNeighborsClassifier(n_neighbors=n_neighbors)
+    knn.fit(X_train, y_train)
+    y_pred = knn.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Accuracy: {accuracy:.2f}")
+
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
+
+    # get influential features
+    feature_names = vectorizer.get_feature_names_out()
+    feature_scores = X_train.mean(axis=0).A1  
+    top_indices = feature_scores.argsort()[::-1][:top_n]  
+    top_features = [(feature_names[i], feature_scores[i]) for i in top_indices]
+
+    print(f"\nTop {top_n} Influential Features:")
+    for feature, score in top_features:
+        print(f"Feature: {feature}, Score: {score:.4f}")
+
+    return accuracy, top_features   
+
+
+
+
+
+
+#run classifiers
 naive_bayes_classifier(albanian, 'content', 'fake_news')
 naive_bayes_classifier(soccer, 'tweet', 'real')
-
-
+knn_classifier(albanian, 'content', 'fake_news')
+knn_classifier(soccer, 'tweet', 'real')
