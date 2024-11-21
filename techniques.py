@@ -111,7 +111,7 @@ def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_s
     )
 
     accuracy = accuracy_score(test[label_col], test['predicted'])
-    print(f"Accuracy: {accuracy}")
+    print(f"NB (w/ laplace smoothing Accuracy: {accuracy}")
 
     # print top words influencing fake news
     word_influence = {
@@ -125,6 +125,7 @@ def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_s
     print("Top words pulling toward fake news:")
     for word, influence in top_words:
         print(f"Word: {word}, Pull: {influence:.4f}")
+    
 
     return accuracy, top_words
 
@@ -166,7 +167,7 @@ def knn_classifier(data, content_col, label_col, test_size=0.2, random_state=42,
     y_pred = knn.predict(X_test)
 
     accuracy = accuracy_score(y_test, y_pred)
-    print(f"Accuracy: {accuracy:.2f}")
+    print(f"KNN Accuracy: {accuracy:.2f}")
 
     print("\nClassification Report:")
     print(classification_report(y_test, y_pred))
@@ -181,8 +182,120 @@ def knn_classifier(data, content_col, label_col, test_size=0.2, random_state=42,
     for feature, score in top_features:
         print(f"Feature: {feature}, Score: {score:.4f}")
 
-    return accuracy, top_features   
+    return accuracy, top_features
 
+#start svm
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+
+def svm_classifier(data, content_col, label_col, test_size=0.2, random_state=42):
+    """
+    Reusable function for SVM classification
+    
+    Args:
+    data: pandas DataFrame
+    content_col: column name containing text data
+    label_col: column name containing labels
+    test_size: proportion of data to use for testing
+
+    Returns:
+    accuracy: accuracy of classifier
+    """
+
+    data['tokens'] = data[content_col].apply(tokenize)
+    data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
+    X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
+
+    # vectorize text data using TF-IDF
+    vectorizer = TfidfVectorizer()
+    X_train = vectorizer.fit_transform(X_train)
+    X_test = vectorizer.transform(X_test)
+
+    # standardize features
+    scaler = StandardScaler(with_mean=False)
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # train SVM
+    svm = SVC()
+    svm.fit(X_train, y_train)
+    y_pred = svm.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"SVM Accuracy: {accuracy:.2f}")
+
+    #print classification report
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
+
+    return accuracy
+
+from sklearn.tree import DecisionTreeClassifier, export_text
+def decision_tree_classifier(data, content_col, label_col, test_size=0.2, random_state=42, top_n=10, max_depth_range=(1, 50)):
+    data['tokens'] = data[content_col].apply(tokenize)
+    data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
+
+    X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
+
+    vectorizer = TfidfVectorizer()
+    X_train = vectorizer.fit_transform(X_train)
+    X_test = vectorizer.transform(X_test)
+
+    best_accuracy = 0
+    best_max_depth = None
+    best_top_features = None
+    
+
+    for max_depth in range(max_depth_range[0], max_depth_range[1] + 1):
+        dt = DecisionTreeClassifier(random_state=random_state, max_depth=max_depth)
+        dt.fit(X_train, y_train)
+        y_pred = dt.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        if accuracy > best_accuracy:
+            best_accuracy = accuracy
+            best_max_depth = max_depth
+
+    print(f"\nBest Max Depth: {best_max_depth}")
+    print(f"Best Accuracy: {best_accuracy:.2f}")
+
+    print(f"\nTop {top_n} Influential Features:")
+
+   
+
+    return best_accuracy, best_max_depth, best_top_features
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+def random_forest_classifier(data, content_col, label_col, test_size=0.2, random_state=42, top_n=10, n_estimators=100):
+    data['tokens'] = data[content_col].apply(tokenize)
+    data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
+
+    X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
+
+    vectorizer = TfidfVectorizer()
+    X_train = vectorizer.fit_transform(X_train)
+    X_test = vectorizer.transform(X_test)
+
+    best_accuracy = 0
+    best_n_estimators = None
+    best_top_features = None
+
+    for n_estimators in range(1, n_estimators + 1):
+        rf = RandomForestClassifier(random_state=random_state, n_estimators=n_estimators)
+        rf.fit(X_train, y_train)
+        y_pred = rf.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        if accuracy > best_accuracy:
+            best_accuracy = accuracy
+            best_n_estimators = n_estimators
+
+    print(f"\nBest Number of Estimators: {best_n_estimators}")
+    print(f"Best Accuracy: {best_accuracy:.2f}")
+
+    print(f"\nTop {top_n} Influential Features:")
+
+    return best_accuracy, best_n_estimators, best_top_features
 
 
 
@@ -193,3 +306,15 @@ naive_bayes_classifier(albanian, 'content', 'fake_news')
 naive_bayes_classifier(soccer, 'tweet', 'real')
 knn_classifier(albanian, 'content', 'fake_news')
 knn_classifier(soccer, 'tweet', 'real')
+svm_classifier(albanian, 'content', 'fake_news')
+#make soccer data run faster by clipping data
+short_soccer = soccer.sample(1000)
+svm_classifier(short_soccer, 'tweet', 'real')
+decision_tree_classifier(albanian, 'content', 'fake_news')
+decision_tree_classifier(soccer, 'tweet', 'real')
+random_forest_classifier(albanian, 'content', 'fake_news')
+#make soccer data run faster by changing max_depth_range
+decision_tree_classifier(soccer, 'tweet', 'real', max_depth_range=(1, 10))
+
+
+
