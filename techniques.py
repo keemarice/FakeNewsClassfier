@@ -32,9 +32,12 @@ realSoccer = pd.read_csv('real-soccer.csv')
 fakeSoccer['real'] = 0
 realSoccer['real'] = 1
 soccer = pd.concat([fakeSoccer, realSoccer])
-text_column = 'tweet'  
-soccer[text_column] = soccer[text_column].fillna("").astype(str) # Fill NaNs and convert to string fixes errors
+soccer['tweet'] = soccer['tweet'].fillna("").astype(str) # Fill NaNs and convert to string fixes errors
 print(soccer.head(10))
+
+wel = pd.read_csv('WELFake_Dataset.csv')
+wel['text'] = wel['text'].fillna("").astype(str) # Fill NaNs and convert to string fixes errors
+print(wel.head(10)) #1 is real, 0 is fake
 
 #start naive bayes
 from sklearn.feature_extraction.text import CountVectorizer
@@ -136,6 +139,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 
+#CURSE OF DIMENTIONALITY
 def knn_classifier(data, content_col, label_col, test_size=0.2, random_state=42, n_neighbors=10, top_n=10):
     """
     Reusable function for KNN classification
@@ -297,24 +301,157 @@ def random_forest_classifier(data, content_col, label_col, test_size=0.2, random
 
     return best_accuracy, best_n_estimators, best_top_features
 
+from sklearn.linear_model import LogisticRegression
 
+def logistic_regression_classifier(data, content_col, label_col, test_size=0.2, random_state=42):
+    """
+    Reusable function for logistic regression classification
+    
+    Args:
+    data: pandas DataFrame
+    content_col: column name containing text data
+    label_col: column name containing labels
+    test_size: proportion of data to use for testing
+
+    Returns:
+    accuracy: accuracy of classifier
+    """
+
+    data['tokens'] = data[content_col].apply(tokenize)
+    data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
+    X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
+
+    # vectorize text data using TF-IDF
+    vectorizer = TfidfVectorizer()
+    X_train = vectorizer.fit_transform(X_train)
+    X_test = vectorizer.transform(X_test)
+
+    # standardize features
+    scaler = StandardScaler(with_mean=False)
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # train logistic regression
+    lr = LogisticRegression()
+    lr.fit(X_train, y_train)
+    y_pred = lr.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Logistic Regression Accuracy: {accuracy:.2f}")
+
+    return accuracy
+
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+def lda_classifier(data, content_col, label_col, test_size=0.2, random_state=42):
+    """
+    Reusable function for LDA classification
+    
+    Args:
+    data: pandas DataFrame
+    content_col: column name containing text data
+    label_col: column name containing labels
+    test_size: proportion of data to use for testing
+
+    Returns:
+    accuracy: accuracy of classifier
+    """
+
+    data['tokens'] = data[content_col].apply(tokenize)
+    data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
+    
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
+
+    # Vectorize text data using TF-IDF
+    vectorizer = TfidfVectorizer()
+    X_train = vectorizer.fit_transform(X_train).toarray()  # Convert sparse matrix to dense
+    X_test = vectorizer.transform(X_test).toarray()        # Convert sparse matrix to dense
+
+    # Standardize features
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # Train LDA
+    lda = LinearDiscriminantAnalysis()
+    lda.fit(X_train, y_train)
+    y_pred = lda.predict(X_test)
+
+    # Evaluate accuracy
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"LDA Accuracy: {accuracy:.2f}")
+
+    return accuracy
+
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+def qda_classifier(data, content_col, label_col, test_size=0.2, random_state=42):
+    """
+    Reusable function for QDA classification
+    
+    Args:
+    data: pandas DataFrame
+    content_col: column name containing text data
+    label_col: column name containing labels
+    test_size: proportion of data to use for testing
+
+    Returns:
+    accuracy: accuracy of classifier
+    """
+
+    data['tokens'] = data[content_col].apply(tokenize)
+    data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
+    
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
+
+    # Vectorize text data using TF-IDF
+    vectorizer = TfidfVectorizer()
+    X_train = vectorizer.fit_transform(X_train).toarray()  # Convert sparse matrix to dense
+    X_test = vectorizer.transform(X_test).toarray()        # Convert sparse matrix to dense
+
+    # Standardize features
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # Train QDA
+    qda = QuadraticDiscriminantAnalysis()
+    qda.fit(X_train, y_train)
+    y_pred = qda.predict(X_test)
+
+    # Evaluate accuracy
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"QDA Accuracy: {accuracy:.2f}")
+
+    return accuracy
 
 
 
 #run classifiers
+
 naive_bayes_classifier(albanian, 'content', 'fake_news')
 naive_bayes_classifier(soccer, 'tweet', 'real')
+naive_bayes_classifier(wel, 'text', 'label')
+'''
 knn_classifier(albanian, 'content', 'fake_news')
 knn_classifier(soccer, 'tweet', 'real')
 svm_classifier(albanian, 'content', 'fake_news')
 #make soccer data run faster by clipping data
 short_soccer = soccer.sample(1000)
 svm_classifier(short_soccer, 'tweet', 'real')
+
 decision_tree_classifier(albanian, 'content', 'fake_news')
-decision_tree_classifier(soccer, 'tweet', 'real')
-random_forest_classifier(albanian, 'content', 'fake_news')
 #make soccer data run faster by changing max_depth_range
 decision_tree_classifier(soccer, 'tweet', 'real', max_depth_range=(1, 10))
+random_forest_classifier(albanian, 'content', 'fake_news')
+#make soccer data run faster by changing n_estimators
+random_forest_classifier(soccer, 'tweet', 'real', n_estimators=10)
+
+logistic_regression_classifier(albanian, 'content', 'fake_news')
+logistic_regression_classifier(soccer, 'tweet', 'real')
+'''
+
+
 
 
 
