@@ -35,9 +35,7 @@ soccer = pd.concat([fakeSoccer, realSoccer])
 soccer['tweet'] = soccer['tweet'].fillna("").astype(str) # Fill NaNs and convert to string fixes errors
 print(soccer.head(10))
 
-wel = pd.read_csv('WELFake_Dataset.csv')
-wel['text'] = wel['text'].fillna("").astype(str) # Fill NaNs and convert to string fixes errors
-print(wel.head(10)) #1 is real, 0 is fake
+
 
 #start naive bayes
 from sklearn.feature_extraction.text import CountVectorizer
@@ -431,8 +429,8 @@ def qda_classifier(data, content_col, label_col, test_size=0.2, random_state=42)
 
 naive_bayes_classifier(albanian, 'content', 'fake_news')
 naive_bayes_classifier(soccer, 'tweet', 'real')
-naive_bayes_classifier(wel, 'text', 'label')
-'''
+
+
 knn_classifier(albanian, 'content', 'fake_news')
 knn_classifier(soccer, 'tweet', 'real')
 svm_classifier(albanian, 'content', 'fake_news')
@@ -449,7 +447,7 @@ random_forest_classifier(soccer, 'tweet', 'real', n_estimators=10)
 
 logistic_regression_classifier(albanian, 'content', 'fake_news')
 logistic_regression_classifier(soccer, 'tweet', 'real')
-'''
+
 
 
 

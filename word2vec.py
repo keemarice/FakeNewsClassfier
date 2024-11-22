@@ -27,9 +27,6 @@ soccer = pd.concat([fakeSoccer, realSoccer])
 soccer['tweet'] = soccer['tweet'].fillna("").astype(str) # Fill NaNs and convert to string fixes errors
 print(soccer.head(10))
 
-wel = pd.read_csv('WELFake_Dataset.csv')
-wel['text'] = wel['text'].fillna("").astype(str) # Fill NaNs and convert to string fixes errors
-print(wel.head(10)) #1 is real, 0 is fake
 
 word2vec_model = KeyedVectors.load_word2vec_format('/Users/karsi/Documents/GoogleNews-vectors-negative300.bin', binary=True)
 
@@ -118,10 +115,9 @@ def decision_tree_classifier_w2v(data, content_col, label_col, word2vec_model, t
 # Test the function
 naive_bayes_classifier_w2v(albanian, 'content', 'fake_news', word2vec_model)
 naive_bayes_classifier_w2v(soccer, 'tweet', 'real', word2vec_model)
-naive_bayes_classifier_w2v(wel, 'text', 'label', word2vec_model)
+
 knn_classifier_w2v(albanian, 'content', 'fake_news', word2vec_model)
 knn_classifier_w2v(soccer, 'tweet', 'real', word2vec_model)
-knn_classifier_w2v(wel, 'text', 'label', word2vec_model)
+
 decision_tree_classifier_w2v(albanian, 'content', 'fake_news', word2vec_model)
 decision_tree_classifier_w2v(soccer, 'tweet', 'real', word2vec_model)
-decision_tree_classifier_w2v(wel, 'text', 'label', word2vec_model)
