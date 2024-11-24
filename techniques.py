@@ -684,15 +684,39 @@ knn_classifier(albanian, 'content', 'fake_news')
 knn_classifier(soccer, 'tweet', 'real')
 '''
 
-naive_bayes_classifier_count(albanian, 'content', 'fake_news')
-naive_bayes_classifier_count(soccer, 'tweet', 'real')
-'''
-naive_bayes_classifier_tfidf(albanian, 'content', 'fake_news')
-naive_bayes_classifier_tfidf(soccer, 'tweet', 'real')
-decision_tree_classifier(albanian, 'content', 'fake_news')
-decision_tree_classifier(soccer, 'tweet', 'real')
-'''
+#print accuracies
+accuracies = {}
+accuracies['albanian'] = {}
+accuracies['soccer'] = {}
+accuracies['twitter'] = {}
 
-knn_classifier(albanian, 'content', 'fake_news')
-hybrid_knn_naive_bayes(albanian, 'content', 'fake_news')
+accuracies['albanian']['naive_bayes'] = naive_bayes_classifier_count(albanian, 'content', 'fake_news')
+accuracies['albanian']['knn'] = knn_classifier(albanian, 'content', 'fake_news')
+accuracies['albanian']['svm'] = svm_classifier(albanian, 'content', 'fake_news')
+accuracies['albanian']['decision_tree'] = decision_tree_classifier(albanian, 'content', 'fake_news')
+accuracies['albanian']['random_forest'] = random_forest_classifier(albanian, 'content', 'fake_news')
+accuracies['albanian']['logistic_regression'] = logistic_regression_classifier(albanian, 'content', 'fake_news')
+accuracies['albanian']['knn/naive_bayes'] = hybrid_knn_naive_bayes(albanian, 'content', 'fake_news')
+accuracies['albanian']['nb/lr'] = hybrid_nb_lr(albanian, 'content', 'fake_news')
+
+accuracies['soccer']['naive_bayes'] = naive_bayes_classifier_count(soccer, 'tweet', 'real')
+accuracies['soccer']['knn'] = knn_classifier(soccer, 'tweet', 'real')
+#accuracies['soccer']['svm'] = svm_classifier(soccer, 'tweet', 'real')
+#accuracies['soccer']['decision_tree'] = decision_tree_classifier(soccer, 'tweet', 'real')
+#accuracies['soccer']['random_forest'] = random_forest_classifier(soccer, 'tweet', 'real')
+accuracies['soccer']['logistic_regression'] = logistic_regression_classifier(soccer, 'tweet', 'real')
+accuracies['soccer']['knn/naive_bayes'] = hybrid_knn_naive_bayes(soccer, 'tweet', 'real')
+accuracies['soccer']['nb/lr'] = hybrid_nb_lr(soccer, 'tweet', 'real')
+
+
+soccer_small = soccer.sample(1000)
+accuracies['soccer']['svm'] = svm_classifier(soccer_small, 'tweet', 'real')
+accuracies['soccer']['decision_tree'] = decision_tree_classifier(soccer_small, 'tweet', 'real')
+accuracies['soccer']['random_forest'] = random_forest_classifier(soccer_small, 'tweet', 'real')
+
+accuracies = pd.DataFrame(accuracies)
+print(accuracies)
+
+
+
 
