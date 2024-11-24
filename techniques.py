@@ -423,13 +423,102 @@ def qda_classifier(data, content_col, label_col, test_size=0.2, random_state=42)
 
     return accuracy
 
+from sklearn.neural_network import MLPClassifier
+def neural_network_classifier(data, content_col, label_col, test_size=0.2, random_state=42):
+    """
+    Reusable function for neural network classification
+    
+    Args:
+    data: pandas DataFrame
+    content_col: column name containing text data
+    label_col: column name containing labels
+    test_size: proportion of data to use for testing
+
+    Returns:
+    accuracy: accuracy of classifier
+    """
+
+    data['tokens'] = data[content_col].apply(tokenize)
+    data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
+    
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
+
+    # Vectorize text data using TF-IDF
+    vectorizer = TfidfVectorizer()
+    X_train = vectorizer.fit_transform(X_train).toarray()  # Convert sparse matrix to dense
+    X_test = vectorizer.transform(X_test).toarray()        # Convert sparse matrix to dense
+
+    # Standardize features
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # Train neural network
+    nn = MLPClassifier()
+    nn.fit(X_train, y_train)
+    y_pred = nn.predict(X_test)
+
+    # Evaluate accuracy
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Neural Network Accuracy: {accuracy:.2f}")
+
+
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.metrics import accuracy_score
+
+def hybrid_knn_naive_bayes(data, content_col, label_col, test_size=0.2, random_state=42, weight_nb=0.6, weight_knn=0.4, n_neighbors=5):
+    """
+    Hybrid model combining Naive Bayes and KNN for classification.
+
+    Args:
+        data (DataFrame): Input data containing text and labels.
+        content_col (str): Name of the column containing text data.
+        label_col (str): Name of the column containing labels.
+        test_size (float): Proportion of the data to use for testing.
+        random_state (int): Random seed for reproducibility.
+        weight_nb (float): Weight for Naive Bayes predictions.
+        weight_knn (float): Weight for KNN predictions.
+        n_neighbors (int): Number of neighbors for KNN.
+
+    Returns:
+        accuracy (float): Accuracy of the hybrid model.
+    """
+    data['tokens'] = data[content_col].apply(tokenize)
+    data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
+    X_train, X_test, y_train, y_test = train_test_split(
+        data['tokens'], data[label_col], test_size=test_size, random_state=random_state
+    )
+    vectorizer = TfidfVectorizer()
+    X_train_vectorized = vectorizer.fit_transform(X_train)
+    X_test_vectorized = vectorizer.transform(X_test)
+
+    #NB
+    nb_model = MultinomialNB()
+    nb_model.fit(X_train_vectorized, y_train)
+    nb_probs = nb_model.predict_proba(X_test_vectorized)
+
+    #KNN
+    knn_model = KNeighborsClassifier(n_neighbors=n_neighbors)
+    knn_model.fit(X_train_vectorized, y_train)
+    knn_probs = knn_model.predict_proba(X_test_vectorized)
+
+    # Combine predictions using weighted voting
+    combined_probs = (weight_nb * nb_probs) + (weight_knn * knn_probs)
+    y_pred = combined_probs.argmax(axis=1)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Hybrid Model Accuracy: {accuracy}")
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
+
+    return accuracy
 
 
 #run classifiers
 
 naive_bayes_classifier(albanian, 'content', 'fake_news')
 naive_bayes_classifier(soccer, 'tweet', 'real')
-
+'''
 
 knn_classifier(albanian, 'content', 'fake_news')
 knn_classifier(soccer, 'tweet', 'real')
@@ -448,8 +537,8 @@ random_forest_classifier(soccer, 'tweet', 'real', n_estimators=10)
 logistic_regression_classifier(albanian, 'content', 'fake_news')
 logistic_regression_classifier(soccer, 'tweet', 'real')
 
-
-
-
-
-
+neural_network_classifier(albanian, 'content', 'fake_news')
+neural_network_classifier(soccer, 'tweet', 'real')
+'''
+hybrid_knn_naive_bayes(albanian, 'content', 'fake_news')
+hybrid_knn_naive_bayes(soccer, 'tweet', 'real')
