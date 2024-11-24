@@ -513,6 +513,35 @@ def hybrid_knn_naive_bayes(data, content_col, label_col, test_size=0.2, random_s
 
     return accuracy
 
+def hybrid_nb_lr(data, content_col, label_col, test_size=0.2, random_state=42):
+    """
+    Hybrid model combining Naive Bayes and Logistic Regression.
+    """
+    data['tokens'] = data[content_col].apply(lambda x: ' '.join(tokenize(x)))
+    X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
+    
+    vectorizer = TfidfVectorizer()
+    X_train_vec = vectorizer.fit_transform(X_train)
+    X_test_vec = vectorizer.transform(X_test)
+    
+    # nb
+    nb = MultinomialNB()
+    nb.fit(X_train_vec, y_train)
+    nb_train_probs = nb.predict_proba(X_train_vec)
+    nb_test_probs = nb.predict_proba(X_test_vec)
+    
+    # logistic on nb
+    lr = LogisticRegression()
+    lr.fit(nb_train_probs, y_train)
+    y_pred = lr.predict(nb_test_probs)
+    
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Hybrid NB + LR Accuracy: {accuracy}")
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
+    
+    return accuracy
+
 
 #run classifiers
 
@@ -542,5 +571,8 @@ neural_network_classifier(soccer, 'tweet', 'real')
 '''
 hybrid_knn_naive_bayes(albanian, 'content', 'fake_news')
 hybrid_knn_naive_bayes(soccer, 'tweet', 'real')
+
+hybrid_nb_lr(albanian, 'content', 'fake_news')
+hybrid_nb_lr(soccer, 'tweet', 'real')
 
 #commit
