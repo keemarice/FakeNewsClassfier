@@ -48,9 +48,9 @@ from collections import Counter
 
 
 def tokenize(text):
-    return re.findall(r'\b\w+\b|[!?.,;]', text.lower())  # Tokenize words and punctuation
+    return re.findall(r'\b\w+\b|[!?.,;]', text.lower())  
 
-def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_state=42, top_n=10):
+def naive_bayes_classifier_count(data, content_col, label_col, test_size=0.2, random_state=42, top_n=10):
     """
     Reusable function for Naive Bayes classification
     
@@ -127,7 +127,78 @@ def naive_bayes_classifier(data, content_col, label_col, test_size=0.2, random_s
     for word, influence in top_words:
         print(f"Word: {word}, Pull: {influence:.4f}")
     
+    # Plot misclassified 
+    misclassified = test[test[label_col] != test['predicted']]
+    plt.figure(figsize=(10, 6))
+    plt.hist(misclassified[content_col].apply(len), bins=20, color='red', alpha=0.7, label='Misclassified')
+    plt.hist(test[content_col].apply(len), bins=20, color='blue', alpha=0.5, label='All')
+    plt.xlabel('Length of Content')
+    plt.ylabel('Frequency')
+    plt.title('Distribution of Content Lengths for Misclassified Examples')
+    plt.legend()
+    plt.show()
+    
+  
+    return accuracy, top_words
 
+def naive_bayes_classifier_tfidf(data, content_col, label_col, test_size=0.2, random_state=42, top_n=10, alpha=1.0):
+    """
+    Reusable function for Naive Bayes classification using TF-IDF vectorization and Laplace smoothing.
+    
+    Args:
+    data: pandas DataFrame
+    content_col: column name containing text data
+    label_col: column name containing labels
+    test_size: proportion of data to use for testing
+    random_state: random seed for reproducibility
+    top_n: number of top influential words to display
+    alpha: smoothing parameter for Laplace smoothing in Naive Bayes
+
+    Returns:
+    accuracy: accuracy of classifier
+    top_words: top words influencing fake news (top_n)
+    """
+    # Preprocess text
+    data['tokens'] = data[content_col].apply(lambda x: ' '.join(tokenize(x)))
+
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(
+        data['tokens'], data[label_col], test_size=test_size, random_state=random_state
+    )
+
+    vectorizer = TfidfVectorizer()
+    X_train_vec = vectorizer.fit_transform(X_train)
+    X_test_vec = vectorizer.transform(X_test)
+
+    nb_model = MultinomialNB(alpha=alpha)
+    nb_model.fit(X_train_vec, y_train)
+
+    y_pred = nb_model.predict(X_test_vec)
+    accuracy = accuracy_score(y_test, y_pred)
+    print(f"Naive Bayes Accuracy (with alpha={alpha}): {accuracy:.2f}")
+    print("\nClassification Report:")
+    print(classification_report(y_test, y_pred))
+
+    feature_names = vectorizer.get_feature_names_out()
+    feature_log_probs = nb_model.feature_log_prob_[1] - nb_model.feature_log_prob_[0]
+    top_indices = feature_log_probs.argsort()[::-1][:top_n]
+    top_words = [(feature_names[i], feature_log_probs[i]) for i in top_indices]
+
+    print(f"\nTop {top_n} Influential Words:")
+    for word, score in top_words:
+        print(f"Word: {word}, Score: {score:.4f}")
+
+    #plot misclassified
+    misclassified = data.loc[y_test[y_test != y_pred].index]
+    plt.figure(figsize=(10, 6))
+    plt.hist(misclassified[content_col].apply(len), bins=20, color='red', alpha=0.7, label='Misclassified')
+    plt.hist(data[content_col].apply(len), bins=20, color='blue', alpha=0.5, label='All')
+    plt.xlabel('Length of Content')
+    plt.ylabel('Frequency')
+    plt.title('Distribution of Content Lengths for Misclassified Examples')
+    plt.legend()
+    plt.show()
+    
     return accuracy, top_words
 
 
@@ -404,8 +475,8 @@ def qda_classifier(data, content_col, label_col, test_size=0.2, random_state=42)
 
     # Vectorize text data using TF-IDF
     vectorizer = TfidfVectorizer()
-    X_train = vectorizer.fit_transform(X_train).toarray()  # Convert sparse matrix to dense
-    X_test = vectorizer.transform(X_test).toarray()        # Convert sparse matrix to dense
+    X_train = vectorizer.fit_transform(X_train).toarray()  
+    X_test = vectorizer.transform(X_test).toarray()   
 
     # Standardize features
     scaler = StandardScaler()
@@ -543,14 +614,16 @@ def hybrid_nb_lr(data, content_col, label_col, test_size=0.2, random_state=42):
     return accuracy
 
 
+
 #run classifiers
 
-naive_bayes_classifier(albanian, 'content', 'fake_news')
-naive_bayes_classifier(soccer, 'tweet', 'real')
+
+
+
+
 '''
 
-knn_classifier(albanian, 'content', 'fake_news')
-knn_classifier(soccer, 'tweet', 'real')
+
 svm_classifier(albanian, 'content', 'fake_news')
 #make soccer data run faster by clipping data
 short_soccer = soccer.sample(1000)
@@ -569,10 +642,24 @@ logistic_regression_classifier(soccer, 'tweet', 'real')
 neural_network_classifier(albanian, 'content', 'fake_news')
 neural_network_classifier(soccer, 'tweet', 'real')
 '''
+'''
 hybrid_knn_naive_bayes(albanian, 'content', 'fake_news')
 hybrid_knn_naive_bayes(soccer, 'tweet', 'real')
 
 hybrid_nb_lr(albanian, 'content', 'fake_news')
 hybrid_nb_lr(soccer, 'tweet', 'real')
 
-#commit
+svm_classifier(albanian, 'content', 'fake_news')
+#make soccer data run faster by clipping data
+short_soccer = soccer.sample(1000)
+svm_classifier(short_soccer, 'tweet', 'real')
+
+knn_classifier(albanian, 'content', 'fake_news')
+knn_classifier(soccer, 'tweet', 'real')
+'''
+
+naive_bayes_classifier_count(albanian, 'content', 'fake_news')
+naive_bayes_classifier_count(soccer, 'tweet', 'real')
+naive_bayes_classifier_tfidf(albanian, 'content', 'fake_news')
+naive_bayes_classifier_tfidf(soccer, 'tweet', 'real')
+

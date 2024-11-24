@@ -113,11 +113,11 @@ def decision_tree_classifier_w2v(data, content_col, label_col, word2vec_model, t
     return accuracy
 
 # Test the function
-naive_bayes_classifier_w2v(albanian, 'content', 'fake_news', word2vec_model)
-naive_bayes_classifier_w2v(soccer, 'tweet', 'real', word2vec_model)
+#naive_bayes_classifier_w2v(albanian, 'content', 'fake_news', word2vec_model)
+#naive_bayes_classifier_w2v(soccer, 'tweet', 'real', word2vec_model)
 
 knn_classifier_w2v(albanian, 'content', 'fake_news', word2vec_model)
 knn_classifier_w2v(soccer, 'tweet', 'real', word2vec_model)
 
-decision_tree_classifier_w2v(albanian, 'content', 'fake_news', word2vec_model)
-decision_tree_classifier_w2v(soccer, 'tweet', 'real', word2vec_model)
+#decision_tree_classifier_w2v(albanian, 'content', 'fake_news', word2vec_model)
+#decision_tree_classifier_w2v(soccer, 'tweet', 'real', word2vec_model)
