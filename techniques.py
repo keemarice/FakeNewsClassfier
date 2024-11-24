@@ -255,6 +255,17 @@ def knn_classifier(data, content_col, label_col, test_size=0.2, random_state=42,
     for feature, score in top_features:
         print(f"Feature: {feature}, Score: {score:.4f}")
 
+    #plot 
+    plt.figure(figsize=(10, 6))
+    words, scores = zip(*top_features)
+    plt.barh(words, scores, color='skyblue', edgecolor='black')
+    plt.gca().invert_yaxis()  # Invert y-axis for descending order
+    plt.title(f"Top {top_n} Influential Features for KNN Classification")
+    plt.xlabel("Feature Scores (TF-IDF Mean)")
+    plt.ylabel("Words")
+    plt.tight_layout()
+    plt.show()
+
     return accuracy, top_features
 
 #start svm
@@ -333,8 +344,12 @@ def decision_tree_classifier(data, content_col, label_col, test_size=0.2, random
 
     print(f"\nTop {top_n} Influential Features:")
 
-   
+    from sklearn.tree import plot_tree
+    plt.figure(figsize=(20, 10))
+    plot_tree(dt, feature_names=vectorizer.get_feature_names_out(), max_depth=2, filled=True)
+    plt.show()
 
+    
     return best_accuracy, best_max_depth, best_top_features
 
 from sklearn.ensemble import RandomForestClassifier
@@ -582,6 +597,17 @@ def hybrid_knn_naive_bayes(data, content_col, label_col, test_size=0.2, random_s
     print("\nClassification Report:")
     print(classification_report(y_test, y_pred))
 
+    def plot_model_contributions(weight_nb, weight_knn):
+        plt.figure(figsize=(6, 5))
+        plt.bar(['Naive Bayes', 'KNN'], [weight_nb, weight_knn], color=['skyblue', 'lightgreen'])
+        plt.ylabel('Weight Contribution')
+        plt.title('Hybrid Model Contributions')
+        plt.ylim(0, 1)
+        plt.tight_layout()
+        plt.show()
+
+    plot_model_contributions(weight_nb, weight_knn)
+
     return accuracy
 
 def hybrid_nb_lr(data, content_col, label_col, test_size=0.2, random_state=42):
@@ -660,6 +686,13 @@ knn_classifier(soccer, 'tweet', 'real')
 
 naive_bayes_classifier_count(albanian, 'content', 'fake_news')
 naive_bayes_classifier_count(soccer, 'tweet', 'real')
+'''
 naive_bayes_classifier_tfidf(albanian, 'content', 'fake_news')
 naive_bayes_classifier_tfidf(soccer, 'tweet', 'real')
+decision_tree_classifier(albanian, 'content', 'fake_news')
+decision_tree_classifier(soccer, 'tweet', 'real')
+'''
+
+knn_classifier(albanian, 'content', 'fake_news')
+hybrid_knn_naive_bayes(albanian, 'content', 'fake_news')
 
