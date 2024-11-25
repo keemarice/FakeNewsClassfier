@@ -312,6 +312,13 @@ def svm_classifier(data, content_col, label_col, test_size=0.2, random_state=42)
     print("\nClassification Report:")
     print(classification_report(y_test, y_pred))
 
+    from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+    cm = confusion_matrix(y_test, y_pred, labels=svm.classes_)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=svm.classes_)
+    disp.plot(cmap='Blues')
+    plt.title('Confusion Matrix for SVM')
+    plt.show()
+
     return accuracy
 
 from sklearn.tree import DecisionTreeClassifier, export_text
@@ -356,6 +363,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 def random_forest_classifier(data, content_col, label_col, test_size=0.2, random_state=42, top_n=10, n_estimators=100):
+   
     data['tokens'] = data[content_col].apply(tokenize)
     data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
 
@@ -365,25 +373,54 @@ def random_forest_classifier(data, content_col, label_col, test_size=0.2, random
     X_train = vectorizer.fit_transform(X_train)
     X_test = vectorizer.transform(X_test)
 
+    accuracy_list = []  # Store accuracy for each number of estimators
     best_accuracy = 0
     best_n_estimators = None
-    best_top_features = None
+    feature_importances = None
 
-    for n_estimators in range(1, n_estimators + 1):
-        rf = RandomForestClassifier(random_state=random_state, n_estimators=n_estimators)
+    for n in range(1, n_estimators + 1):
+        rf = RandomForestClassifier(random_state=random_state, n_estimators=n)
         rf.fit(X_train, y_train)
         y_pred = rf.predict(X_test)
         accuracy = accuracy_score(y_test, y_pred)
+        accuracy_list.append(accuracy)
+
         if accuracy > best_accuracy:
             best_accuracy = accuracy
-            best_n_estimators = n_estimators
+            best_n_estimators = n
+            feature_importances = rf.feature_importances_  
+
+    plt.figure(figsize=(8, 6))
+    plt.plot(range(1, n_estimators + 1), accuracy_list, marker='o', color='blue', label='Accuracy')
+    plt.axvline(x=best_n_estimators, color='red', linestyle='--', label=f'Best Estimators: {best_n_estimators}')
+    plt.title('Accuracy vs. Number of Estimators (Random Forest)')
+    plt.xlabel('Number of Estimators')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+    if feature_importances is not None:
+        feature_names = vectorizer.get_feature_names_out()
+        top_indices = feature_importances.argsort()[::-1][:top_n]
+        top_features = [(feature_names[i], feature_importances[i]) for i in top_indices]
+        
+        # Bar chart for top features
+        plt.figure(figsize=(8, 6))
+        feature_names_plot, importance_scores = zip(*top_features)
+        plt.barh(feature_names_plot, importance_scores, color='green', alpha=0.7)
+        plt.title(f'Top {top_n} Influential Features')
+        plt.xlabel('Feature Importance')
+        plt.gca().invert_yaxis()  
+        plt.tight_layout()
+        plt.show()
+    else:
+        top_features = None
 
     print(f"\nBest Number of Estimators: {best_n_estimators}")
     print(f"Best Accuracy: {best_accuracy:.2f}")
 
-    print(f"\nTop {top_n} Influential Features:")
+    return best_accuracy, best_n_estimators, top_features
 
-    return best_accuracy, best_n_estimators, best_top_features
 
 from sklearn.linear_model import LogisticRegression
 
@@ -404,18 +441,12 @@ def logistic_regression_classifier(data, content_col, label_col, test_size=0.2, 
     data['tokens'] = data[content_col].apply(tokenize)
     data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
     X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
-
-    # vectorize text data using TF-IDF
     vectorizer = TfidfVectorizer()
     X_train = vectorizer.fit_transform(X_train)
     X_test = vectorizer.transform(X_test)
-
-    # standardize features
     scaler = StandardScaler(with_mean=False)
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
-
-    # train logistic regression
     lr = LogisticRegression()
     lr.fit(X_train, y_train)
     y_pred = lr.predict(X_test)
@@ -445,23 +476,16 @@ def lda_classifier(data, content_col, label_col, test_size=0.2, random_state=42)
     
     # Split data
     X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
-
-    # Vectorize text data using TF-IDF
     vectorizer = TfidfVectorizer()
-    X_train = vectorizer.fit_transform(X_train).toarray()  # Convert sparse matrix to dense
-    X_test = vectorizer.transform(X_test).toarray()        # Convert sparse matrix to dense
+    X_train = vectorizer.fit_transform(X_train).toarray()  
+    X_test = vectorizer.transform(X_test).toarray()       
 
     # Standardize features
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
-
-    # Train LDA
     lda = LinearDiscriminantAnalysis()
     lda.fit(X_train, y_train)
     y_pred = lda.predict(X_test)
-
-    # Evaluate accuracy
     accuracy = accuracy_score(y_test, y_pred)
     print(f"LDA Accuracy: {accuracy:.2f}")
 
@@ -484,16 +508,10 @@ def qda_classifier(data, content_col, label_col, test_size=0.2, random_state=42)
 
     data['tokens'] = data[content_col].apply(tokenize)
     data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
-    
-    # Split data
     X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
-
-    # Vectorize text data using TF-IDF
     vectorizer = TfidfVectorizer()
     X_train = vectorizer.fit_transform(X_train).toarray()  
     X_test = vectorizer.transform(X_test).toarray()   
-
-    # Standardize features
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
@@ -502,8 +520,6 @@ def qda_classifier(data, content_col, label_col, test_size=0.2, random_state=42)
     qda = QuadraticDiscriminantAnalysis()
     qda.fit(X_train, y_train)
     y_pred = qda.predict(X_test)
-
-    # Evaluate accuracy
     accuracy = accuracy_score(y_test, y_pred)
     print(f"QDA Accuracy: {accuracy:.2f}")
 
@@ -644,46 +660,6 @@ def hybrid_nb_lr(data, content_col, label_col, test_size=0.2, random_state=42):
 #run classifiers
 
 
-
-
-
-'''
-
-
-svm_classifier(albanian, 'content', 'fake_news')
-#make soccer data run faster by clipping data
-short_soccer = soccer.sample(1000)
-svm_classifier(short_soccer, 'tweet', 'real')
-
-decision_tree_classifier(albanian, 'content', 'fake_news')
-#make soccer data run faster by changing max_depth_range
-decision_tree_classifier(soccer, 'tweet', 'real', max_depth_range=(1, 10))
-random_forest_classifier(albanian, 'content', 'fake_news')
-#make soccer data run faster by changing n_estimators
-random_forest_classifier(soccer, 'tweet', 'real', n_estimators=10)
-
-logistic_regression_classifier(albanian, 'content', 'fake_news')
-logistic_regression_classifier(soccer, 'tweet', 'real')
-
-neural_network_classifier(albanian, 'content', 'fake_news')
-neural_network_classifier(soccer, 'tweet', 'real')
-'''
-'''
-hybrid_knn_naive_bayes(albanian, 'content', 'fake_news')
-hybrid_knn_naive_bayes(soccer, 'tweet', 'real')
-
-hybrid_nb_lr(albanian, 'content', 'fake_news')
-hybrid_nb_lr(soccer, 'tweet', 'real')
-
-svm_classifier(albanian, 'content', 'fake_news')
-#make soccer data run faster by clipping data
-short_soccer = soccer.sample(1000)
-svm_classifier(short_soccer, 'tweet', 'real')
-
-knn_classifier(albanian, 'content', 'fake_news')
-knn_classifier(soccer, 'tweet', 'real')
-'''
-
 #print accuracies
 accuracies = {}
 accuracies['albanian'] = {}
@@ -716,6 +692,9 @@ accuracies['soccer']['random_forest'] = random_forest_classifier(soccer_small, '
 
 accuracies = pd.DataFrame(accuracies)
 print(accuracies)
+
+print(albanian.shape)
+print(soccer.shape)
 
 
 
