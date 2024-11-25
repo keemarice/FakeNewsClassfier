@@ -199,23 +199,6 @@ from sklearn.metrics import classification_report
 
 #CURSE OF DIMENTIONALITY
 def knn_classifier(data, content_col, label_col, test_size=0.2, random_state=42, n_neighbors=10, top_n=10):
-    """
-    Reusable function for KNN classification
-    
-    Args:
-    data: pandas DataFrame
-    content_col: column name containing text data
-    label_col: column name containing labels
-    test_size: proportion of data to use for testing
-    n_neighbors: number of neighbors to consider
-
-    Returns:
-    accuracy: accuracy of classifier
-    top_features: top features influencing classification
-
-   We are going to use the TF-IDF vectorizer, which was not used in Naive Bayes
-    because Naive Bayes relies on absolute word counts rather than the relative importance of words across documents.
-    """
     data['tokens'] = data[content_col].apply(tokenize)
     data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
     X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
