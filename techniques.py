@@ -1,14 +1,3 @@
-#naive bayes
-#knn
-#svm
-#decision tree
-#random forest
-#logistic regression
-#LDA
-#QDA
-#clubpenguin
-
-#open and clean data
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
