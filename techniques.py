@@ -40,21 +40,6 @@ def tokenize(text):
     return re.findall(r'\b\w+\b|[!?.,;]', text.lower())  
 
 def naive_bayes_classifier_count(data, content_col, label_col, test_size=0.2, random_state=42, top_n=10):
-    """
-    Reusable function for Naive Bayes classification
-    
-    Args:
-    data: pandas DataFrame
-    content_col: column name containing text data (content for Albaian data)
-    label_col: column name containing labels (fake_news for Albanian data)
-    test_size: proportion of data to use for testing
-
-    Returns:
-    accuracy: accuracy of classifier
-    top_words: top words influencing fake news (top 10, can change in function header at top_n)
-    """
-
-
     data['tokens'] = data[content_col].apply(tokenize)
 
     # real/fake tokens
@@ -131,22 +116,6 @@ def naive_bayes_classifier_count(data, content_col, label_col, test_size=0.2, ra
     return accuracy, top_words
 
 def naive_bayes_classifier_tfidf(data, content_col, label_col, test_size=0.2, random_state=42, top_n=10, alpha=1.0):
-    """
-    Reusable function for Naive Bayes classification using TF-IDF vectorization and Laplace smoothing.
-    
-    Args:
-    data: pandas DataFrame
-    content_col: column name containing text data
-    label_col: column name containing labels
-    test_size: proportion of data to use for testing
-    random_state: random seed for reproducibility
-    top_n: number of top influential words to display
-    alpha: smoothing parameter for Laplace smoothing in Naive Bayes
-
-    Returns:
-    accuracy: accuracy of classifier
-    top_words: top words influencing fake news (top_n)
-    """
     # Preprocess text
     data['tokens'] = data[content_col].apply(lambda x: ' '.join(tokenize(x)))
 
@@ -245,19 +214,6 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 
 def svm_classifier(data, content_col, label_col, test_size=0.2, random_state=42):
-    """
-    Reusable function for SVM classification
-    
-    Args:
-    data: pandas DataFrame
-    content_col: column name containing text data
-    label_col: column name containing labels
-    test_size: proportion of data to use for testing
-
-    Returns:
-    accuracy: accuracy of classifier
-    """
-
     data['tokens'] = data[content_col].apply(tokenize)
     data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
     X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
@@ -397,19 +353,6 @@ def random_forest_classifier(data, content_col, label_col, test_size=0.2, random
 from sklearn.linear_model import LogisticRegression
 
 def logistic_regression_classifier(data, content_col, label_col, test_size=0.2, random_state=42):
-    """
-    Reusable function for logistic regression classification
-    
-    Args:
-    data: pandas DataFrame
-    content_col: column name containing text data
-    label_col: column name containing labels
-    test_size: proportion of data to use for testing
-
-    Returns:
-    accuracy: accuracy of classifier
-    """
-
     data['tokens'] = data[content_col].apply(tokenize)
     data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
     X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
@@ -430,18 +373,6 @@ def logistic_regression_classifier(data, content_col, label_col, test_size=0.2, 
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 def lda_classifier(data, content_col, label_col, test_size=0.2, random_state=42):
-    """
-    Reusable function for LDA classification
-    
-    Args:
-    data: pandas DataFrame
-    content_col: column name containing text data
-    label_col: column name containing labels
-    test_size: proportion of data to use for testing
-
-    Returns:
-    accuracy: accuracy of classifier
-    """
 
     data['tokens'] = data[content_col].apply(tokenize)
     data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
@@ -465,18 +396,6 @@ def lda_classifier(data, content_col, label_col, test_size=0.2, random_state=42)
 
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 def qda_classifier(data, content_col, label_col, test_size=0.2, random_state=42):
-    """
-    Reusable function for QDA classification
-    
-    Args:
-    data: pandas DataFrame
-    content_col: column name containing text data
-    label_col: column name containing labels
-    test_size: proportion of data to use for testing
-
-    Returns:
-    accuracy: accuracy of classifier
-    """
 
     data['tokens'] = data[content_col].apply(tokenize)
     data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
@@ -542,22 +461,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import accuracy_score
 
 def hybrid_knn_naive_bayes(data, content_col, label_col, test_size=0.2, random_state=42, weight_nb=0.6, weight_knn=0.4, n_neighbors=5):
-    """
-    Hybrid model combining Naive Bayes and KNN for classification.
-
-    Args:
-        data (DataFrame): Input data containing text and labels.
-        content_col (str): Name of the column containing text data.
-        label_col (str): Name of the column containing labels.
-        test_size (float): Proportion of the data to use for testing.
-        random_state (int): Random seed for reproducibility.
-        weight_nb (float): Weight for Naive Bayes predictions.
-        weight_knn (float): Weight for KNN predictions.
-        n_neighbors (int): Number of neighbors for KNN.
-
-    Returns:
-        accuracy (float): Accuracy of the hybrid model.
-    """
     data['tokens'] = data[content_col].apply(tokenize)
     data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
     X_train, X_test, y_train, y_test = train_test_split(
