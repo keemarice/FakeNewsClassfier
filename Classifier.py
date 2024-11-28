@@ -534,26 +534,19 @@ def neural_network_classifier(data, content_col, label_col, test_size=0.2, rando
 
     data['tokens'] = data[content_col].apply(tokenize)
     data['tokens'] = data['tokens'].apply(lambda x: ' '.join(x))
-    
-    # Split data
+
     X_train, X_test, y_train, y_test = train_test_split(data['tokens'], data[label_col], test_size=test_size, random_state=random_state)
-
-    # Vectorize text data using TF-IDF
     vectorizer = TfidfVectorizer()
-    X_train = vectorizer.fit_transform(X_train).toarray()  # Convert sparse matrix to dense
-    X_test = vectorizer.transform(X_test).toarray()        # Convert sparse matrix to dense
-
-    # Standardize features
+    X_train = vectorizer.fit_transform(X_train).toarray()  
+    X_test = vectorizer.transform(X_test).toarray()        
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    # Train neural network
+    # use MLP from sklearn
     nn = MLPClassifier()
     nn.fit(X_train, y_train)
     y_pred = nn.predict(X_test)
-
-    # Evaluate accuracy
     accuracy = accuracy_score(y_test, y_pred)
     print(f"Neural Network Accuracy: {accuracy}")
 
@@ -569,36 +562,15 @@ from sklearn.metrics import classification_report
 import numpy as np
 
 def neural_network_classifier_tensorflow(data, content_col, label_col, test_size=0.2, random_state=42, max_words=5000, max_len=100):
-    """
-    Neural network classifier using TensorFlow/Keras
-    
-    Args:
-    - data: DataFrame containing the dataset
-    - content_col: Name of the column with text data
-    - label_col: Name of the column with labels
-    - test_size: Split ratio for train/test sets
-    - random_state: Random seed for reproducibility
-    - max_words: Maximum number of words to keep in the vocabulary
-    - max_len: Maximum length of text sequences
-    
-    Returns:
-    - accuracy: Accuracy of the neural network model
-    - history: Training history for plotting
-    """
-    # Tokenize and pad text
+    # Tokenize text data not using TF-IDF, instead using Tokenizer from Keras
     tokenizer = Tokenizer(num_words=max_words, oov_token='<OOV>')
     tokenizer.fit_on_texts(data[content_col])
     sequences = tokenizer.texts_to_sequences(data[content_col])
     padded_sequences = pad_sequences(sequences, maxlen=max_len, padding='post', truncating='post')
-
-    # Prepare train and test sets
     X_train, X_test, y_train, y_test = train_test_split(padded_sequences, data[label_col], test_size=test_size, random_state=random_state)
-
-    # Convert labels to NumPy arrays
     y_train = np.array(y_train)
     y_test = np.array(y_test)
 
-    # Define the neural network architecture
     model = Sequential([
         Dense(128, activation='relu', input_shape=(max_len,)),
         Dropout(0.5),
@@ -607,19 +579,13 @@ def neural_network_classifier_tensorflow(data, content_col, label_col, test_size
         Dense(1, activation='sigmoid')  # For binary classification
     ])
 
-    # Compile the model
     model.compile(optimizer='adam',
                   loss='binary_crossentropy',
                   metrics=['accuracy'])
 
-    # Train the model
     history = model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_test, y_test), verbose=1)
-
-    # Evaluate the model
     test_loss, test_accuracy = model.evaluate(X_test, y_test, verbose=0)
     print(f"Neural Network Accuracy: {test_accuracy}")
-
-    # Predictions and classification report
     y_pred = (model.predict(X_test) > 0.5).astype("int32")
     print("\nClassification Report:")
     print(classification_report(y_test, y_pred))
@@ -627,13 +593,6 @@ def neural_network_classifier_tensorflow(data, content_col, label_col, test_size
     return test_accuracy, history
 
 def plot_training_history(history, model_name='Neural Network'):
-    """
-    Plot training and validation accuracy/loss.
-
-    Args:
-    - history: Training history object returned by model.fit()
-    - model_name: Name of the model (for title)
-    """
     plt.figure(figsize=(12, 5))
 
     # Plot accuracy
@@ -695,7 +654,6 @@ accuracies['soccer']['random_forest'] = random_forest_classifier(soccer_small, '
 accuracy_nn = neural_network_classifier(albanian, 'content', 'fake_news')
 accuracy_tf, history_tf = neural_network_classifier_tensorflow(albanian, 'content', 'fake_news')
 
-# Plot the TensorFlow-based model's training and validation metrics
 plot_training_history(history_tf, model_name='Neural Network - TensorFlow (Albanian)')
 
 
