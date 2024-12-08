@@ -33,7 +33,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import accuracy_score
 import re
 from collections import Counter
-
+from sklearn.metrics import classification_report
 
 
 def tokenize(text):
@@ -100,6 +100,10 @@ def naive_bayes_classifier_count(data, content_col, label_col, test_size=0.2, ra
     print("Top words pulling toward fake news:")
     for word, influence in top_words:
         print(f"Word: {word}, Pull: {influence:.4f}")
+
+    #print classification report
+    print("\nClassification Report:")
+    print(classification_report(test[label_col], test['predicted']))
     
     # Plot misclassified 
     misclassified = test[test[label_col] != test['predicted']]
@@ -625,7 +629,7 @@ accuracies = {}
 accuracies['albanian'] = {}
 accuracies['soccer'] = {}
 accuracies['twitter'] = {}
-'''
+
 accuracies['albanian']['naive_bayes'] = naive_bayes_classifier_count(albanian, 'content', 'fake_news')
 accuracies['albanian']['knn'] = knn_classifier(albanian, 'content', 'fake_news')
 accuracies['albanian']['svm'] = svm_classifier(albanian, 'content', 'fake_news')
@@ -649,7 +653,7 @@ soccer_small = soccer.sample(1000)
 accuracies['soccer']['svm'] = svm_classifier(soccer_small, 'tweet', 'real')
 accuracies['soccer']['decision_tree'] = decision_tree_classifier(soccer_small, 'tweet', 'real')
 accuracies['soccer']['random_forest'] = random_forest_classifier(soccer_small, 'tweet', 'real')
-'''
+
 #test neural nets
 accuracy_nn = neural_network_classifier(albanian, 'content', 'fake_news')
 accuracy_tf, history_tf = neural_network_classifier_tensorflow(albanian, 'content', 'fake_news')
