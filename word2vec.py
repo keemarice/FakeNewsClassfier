@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 #read in data (NEED TO TALK ABT THIS)
 twitter = pd.read_csv('FakeNewsNet.csv') #ONLY INCLUDES TITLES OF ARTICLES
-#print(twitter.head(10))
-#twitter = twitter.drop(['news_url', 'source_domain', 'tweet_num'], axis=1)
 print(twitter.head(10)) 
 print(twitter.columns)
 
@@ -17,8 +15,7 @@ albanian = pd.read_csv('alb-fake-news-corpus.csv')
 print(albanian.head(10))
 print(albanian.columns)
 
-
-#read and clean soccer data
+#read in soccer data
 fakeSoccer = pd.read_csv('fake-soccer.csv')
 realSoccer = pd.read_csv('real-soccer.csv')
 fakeSoccer['real'] = 0
